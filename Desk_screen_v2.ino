@@ -402,7 +402,7 @@ void setup() {
     ui_init();
     //set defalt tabview
     lv_scr_load(objects.main_screen);
-    lv_tabview_set_act(objects.obj10, 3, LV_ANIM_OFF);
+    lv_tabview_set_act(objects.main_tab, 3, LV_ANIM_OFF);
     focus_timer_mode(1);
 
 

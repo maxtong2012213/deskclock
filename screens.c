@@ -667,7 +667,7 @@ void create_screen_main_screen() {
                             lv_obj_add_event_cb(obj, event_handler_checked_cb_main_screen_rgb_on_off, LV_EVENT_VALUE_CHANGED, (void *)0);
                             lv_obj_add_event_cb(obj, event_handler_unchecked_cb_main_screen_rgb_on_off, LV_EVENT_VALUE_CHANGED, (void *)0);
                             lv_obj_add_flag(obj, LV_OBJ_FLAG_CHECKABLE);
-                            lv_obj_add_state(obj, LV_STATE_CHECKED);
+                            //lv_obj_add_state(obj, LV_STATE_CHECKED);
                             lv_obj_set_style_bg_color(obj, lv_color_hex(0xff616161), LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
                             lv_obj_set_style_radius(obj, 90, LV_PART_MAIN | LV_STATE_DEFAULT);

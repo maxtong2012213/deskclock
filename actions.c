@@ -12,10 +12,6 @@ void save_wifi_credentials(const char *ssid, const char *password);
 void __attribute__((weak)) ESP_restart() {}
 void __attribute__((weak)) restart_device(lv_timer_t * timer) { ESP_restart(); }
 
-// Dummy function to prevent compiler errors until you write the logic
-void get_some_rest() {
-    // Add lock screen logic here later
-}
 
 // --- Functions to Show the Keyboard ---
 
@@ -129,7 +125,7 @@ void action_weather_animation(lv_event_t * e) {
     lv_obj_t * forecast_cont = objects.weather_forcast;
     
     static animation_state_t state = {0, 0}; 
-    const uint32_t ANIM_TIME = 500;
+    const uint32_t ANIM_TIME = 250;
 
     lv_anim_del(target_label, NULL);
     lv_anim_del(forecast_cont, NULL);
@@ -237,6 +233,8 @@ void start_alarm_blink(void) {
 }
 
 // --- RGB control ---
+static bool is_rgb_on = false; 
+
 void action_update_rgb_value(lv_event_t*e){
     lv_obj_t * colorwheel = lv_event_get_target(e);
     lv_color_t c = lv_colorwheel_get_rgb(colorwheel);
@@ -246,31 +244,50 @@ void action_update_rgb_value(lv_event_t*e){
     uint8_t g = (color32 >> 8) & 0xFF;
     uint8_t b = (color32) & 0xFF;
 
-    update_led_strip_cpp(r, g, b);
+    // FIX BUG 2: Only send data to the LED strip if the power is ON
+    if (is_rgb_on) {
+        update_led_strip_cpp(r, g, b);
+    }
 }
 
 void action_lock_tabview(lv_event_t * e){
     lv_obj_clear_flag(objects.main_tab, LV_OBJ_FLAG_SCROLLABLE);
-    printf("tabview locked");
 }
 
 void action_unlock_tabview(lv_event_t * e){
     lv_obj_add_flag(objects.main_tab, LV_OBJ_FLAG_SCROLLABLE);
-    printf("tabview unlocked");
 }
 
 void action_rgb_turn_on(lv_event_t * e){
-    lv_obj_add_state(objects.on_off_symbol_main, LV_STATE_CHECKED);
-    lv_obj_add_state(objects.on_off_symbol_pri, LV_STATE_CHECKED);
-
-    update_led_strip_cpp(255, 0, 0);
-}
-
-void action_rgb_turn_off(lv_event_t * e){
+    // Update the UI
     lv_obj_clear_state(objects.on_off_symbol_main, LV_STATE_CHECKED);
     lv_obj_clear_state(objects.on_off_symbol_pri, LV_STATE_CHECKED);
 
-    update_led_strip_cpp(0, 0, 0);
+    is_rgb_on = true; // Mark the power as ON
+
+    // FIX BUG 1: Grab the current color dynamically from the wheel
+    if (objects.rgb_colour_wheel) {
+        lv_color_t c = lv_colorwheel_get_rgb(objects.rgb_colour_wheel);
+        uint32_t color32 = lv_color_to32(c);
+        uint8_t r = (color32 >> 16) & 0xFF;
+        uint8_t g = (color32 >> 8) & 0xFF;
+        uint8_t b = (color32) & 0xFF;
+        
+        update_led_strip_cpp(r, g, b);
+    } else {
+        // Fallback just in case the wheel hasn't loaded yet
+        update_led_strip_cpp(255, 255, 255); 
+    }
+}
+
+void action_rgb_turn_off(lv_event_t * e){
+    // Update the UI
+    lv_obj_add_state(objects.on_off_symbol_main, LV_STATE_CHECKED);
+    lv_obj_add_state(objects.on_off_symbol_pri, LV_STATE_CHECKED);
+
+    is_rgb_on = false; // Mark the power as OFF
+
+    update_led_strip_cpp(0, 0, 0); // Turn off the actual LEDs
 }
 
 // --- Focus timer ---
@@ -363,7 +380,7 @@ void action_stop_timer(lv_event_t * e){
 void action_app_main(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_PRESSED) { 
-        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 150, 0, false);
         lv_tabview_set_act(objects.main_tab, 3, LV_ANIM_OFF); 
     }
 }
@@ -371,7 +388,7 @@ void action_app_main(lv_event_t * e){
 void action_app_temp(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_PRESSED) { 
-        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 150, 0, false);
         lv_tabview_set_act(objects.main_tab, 2, LV_ANIM_OFF); 
     }
 }
@@ -379,7 +396,7 @@ void action_app_temp(lv_event_t * e){
 void action_app_rgb(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_PRESSED) { 
-        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 150, 0, false);
         lv_tabview_set_act(objects.main_tab, 5, LV_ANIM_OFF); 
     }
 }
@@ -387,7 +404,7 @@ void action_app_rgb(lv_event_t * e){
 void action_app_media(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_PRESSED) { 
-        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+        lv_scr_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 150, 0, false);
         lv_tabview_set_act(objects.main_tab, 1, LV_ANIM_OFF); 
     }
 }
@@ -395,7 +412,7 @@ void action_app_media(lv_event_t * e){
 void action_app_setting(lv_event_t * e){
     lv_event_code_t code = lv_event_get_code(e);
     if(code == LV_EVENT_PRESSED) { 
-        lv_scr_load_anim(objects.settings, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, false);
+        lv_scr_load_anim(objects.settings, LV_SCR_LOAD_ANIM_FADE_ON, 150, 0, false);
     }
 }
 
