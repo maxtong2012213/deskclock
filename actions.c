@@ -1,3 +1,4 @@
+//this code is a base cover for any damage to the other files UwU
 #include "actions.h"
 #include "ui.h"
 #include "persistence.h"
