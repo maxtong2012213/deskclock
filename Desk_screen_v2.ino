@@ -36,8 +36,6 @@ const int BRIGHTNESS_LIMIT = 25; // ~10% brightness limit
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
-
-
 // -- Button Config (NEW) --
 // GPIO 0 is usually the "BOOT" button on ESP32 boards. 
 // If using an external button, change this to your GPIO (e.g., 12, 13, 14).
@@ -195,6 +193,11 @@ void update_display_time_cb(lv_timer_t *timer) {
 char weather_temp_c[10] = "--";
 char weather_loc[32] = "";
 
+// NEW: 3-Day Forecast Variables
+char f_date1[16] = "--/--/----"; char f_temp1[10] = "--";
+char f_date2[16] = "--/--/----"; char f_temp2[10] = "--";
+char f_date3[16] = "--/--/----"; char f_temp3[10] = "--";
+
 void fetch_weather_task(void *pvParameters) {
   const int UPDATE_INTERVAL_MS = 10 * 60 * 1000; 
 
@@ -214,7 +217,9 @@ void fetch_weather_task(void *pvParameters) {
        
        if(httpCode == HTTP_CODE_OK) {
          String payload = http.getString();
-         StaticJsonDocument<512> doc;
+         
+         // INCREASED BUFFER SIZE to handle 3-day forecast array
+         DynamicJsonDocument doc(2048); 
          DeserializationError error = deserializeJson(doc, payload);
 
          if (!error) {
@@ -224,6 +229,24 @@ void fetch_weather_task(void *pvParameters) {
            if(t && l) {
              snprintf(weather_temp_c, sizeof(weather_temp_c), "%s°c", t);
              snprintf(weather_loc, sizeof(weather_loc), "%s", l);
+             
+             // NEW: Parse 3-day forecast if available
+              if (doc["forecast"].size() >= 3) {
+                 // Day 1
+                 snprintf(f_date1, sizeof(f_date1), "%s", (const char*)doc["forecast"][0]["date"]);
+                 int t1 = round(doc["forecast"][0]["temp_c"].as<float>());
+                 snprintf(f_temp1, sizeof(f_temp1), "%d°", t1);
+                 
+                 // Day 2
+                 snprintf(f_date2, sizeof(f_date2), "%s", (const char*)doc["forecast"][1]["date"]);
+                 int t2 = round(doc["forecast"][1]["temp_c"].as<float>());
+                 snprintf(f_temp2, sizeof(f_temp2), "%d°", t2);
+                 
+                 // Day 3
+                 snprintf(f_date3, sizeof(f_date3), "%s", (const char*)doc["forecast"][2]["date"]);
+                 int t3 = round(doc["forecast"][2]["temp_c"].as<float>());
+                 snprintf(f_temp3, sizeof(f_temp3), "%d°", t3);
+             }             
              Serial.printf("Weather Updated: %s in %s\n", weather_temp_c, weather_loc);
            }
          } else {
@@ -239,6 +262,18 @@ void fetch_weather_task(void *pvParameters) {
 void update_weather_ui_cb(lv_timer_t *timer) {
     lv_label_set_text(objects.temp, weather_temp_c);
     lv_label_set_text(objects.temp_tab2, weather_temp_c);
+    
+    // NEW: Update forecast cards (Check if screen exists to prevent crashes)
+    if (objects.date1 != NULL) {
+        lv_label_set_text(objects.date1, f_date1);
+        lv_label_set_text(objects.temp1, f_temp1);
+        
+        lv_label_set_text(objects.date2, f_date2);
+        lv_label_set_text(objects.temp2, f_temp2);
+        
+        lv_label_set_text(objects.date3, f_date3);
+        lv_label_set_text(objects.temp3, f_temp3);
+    }
 }
 
 // --- OTA Update Functions ---
@@ -404,8 +439,6 @@ void setup() {
     lv_scr_load(objects.main_screen);
     lv_tabview_set_act(objects.main_tab, 3, LV_ANIM_OFF);
     focus_timer_mode(1);
-
-
 
     lv_label_set_text(objects.time, "--:--");
     lv_label_set_text(objects.temp, "--");
