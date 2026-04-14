@@ -27,6 +27,7 @@ extern void action_timer_setting_done(lv_event_t * e);
 extern void action_stop_timer(lv_event_t * e);
 extern void action_date_pre(lv_event_t * e);
 extern void action_date_next(lv_event_t * e);
+extern void action_startup_to_wifi(lv_event_t * e);
 //app
 extern void action_app_main(lv_event_t * e);
 extern void action_app_temp(lv_event_t * e);

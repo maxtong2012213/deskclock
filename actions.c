@@ -12,7 +12,12 @@ void save_wifi_credentials(const char *ssid, const char *password);
 void __attribute__((weak)) ESP_restart() {}
 void __attribute__((weak)) restart_device(lv_timer_t * timer) { ESP_restart(); }
 
+//startup function
+void action_startup_to_wifi(lv_event_t * e){
+    lv_obj_add_flag(objects.start_up_main, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(objects.first_wifi, LV_OBJ_FLAG_HIDDEN);
 
+}
 // --- Functions to Show the Keyboard ---
 
 void action_keyboard_visable(lv_event_t * e) {
@@ -304,9 +309,9 @@ void timer_update_callback(lv_timer_t * timer) {
         int S = (current_seconds % 60);
 
         if (H > 0) {
-            lv_label_set_text_fmt(objects.obj0, "%02d:%02d", H, M);
+            lv_label_set_text_fmt(objects.focus_timer_time, "%02d:%02d", H, M);
         } else {
-            lv_label_set_text_fmt(objects.obj0, "%02d:%02d", M, S);
+            lv_label_set_text_fmt(objects.focus_timer_time, "%02d:%02d", M, S);
         }
 
         if (total_seconds > 0) {
@@ -352,7 +357,7 @@ void action_timer_setting_done(lv_event_t * e){
      lv_bar_set_range(objects.timer_bar, 0, 100);
      lv_bar_set_value(objects.timer_bar, 0, LV_ANIM_OFF);
     
-     lv_label_set_text_fmt(objects.obj0, "%02d:%02d", selected_index_hour, selected_index_minute);
+     lv_label_set_text_fmt(objects.focus_timer_time, "%02d:%02d", selected_index_hour, selected_index_minute);
      
      if (countdown_timer == NULL) {
         countdown_timer = lv_timer_create(timer_update_callback, 1000, NULL);

@@ -461,7 +461,7 @@ void setup() {
         }
     } else {
         Serial.println("No credentials saved. Loading settings screen.");
-        lv_scr_load(objects.settings);
+        lv_scr_load(objects.set_up);
     }
 }
 
